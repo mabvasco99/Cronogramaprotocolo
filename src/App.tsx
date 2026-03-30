@@ -14,8 +14,8 @@ const DEFAULT_PROFILE: StudentProfile = {
   hoursPerDay: {
     seg: 2, ter: 2, qua: 2, qui: 2, sex: 2, sab: 4, dom: 0,
   },
-  courseId: '',
-  customWeights: null,
+  courseId: 'custom',
+  customWeights: { natureza: 2, matematica: 2, linguagens: 2, humanas: 2 },
   difficultyRatings: DEFAULT_DIFFICULTY,
   weeksUntilExam: 20,
   startDate: new Date().toISOString().slice(0, 10),

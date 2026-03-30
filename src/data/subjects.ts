@@ -10,7 +10,9 @@ export const SUBJECTS: Subject[] = [
     textColor: 'text-white',
     borderColor: 'border-blue-500',
     icon: '📐',
-    basePriority: 1.4,
+    // Matemática é uma área INTEIRA do ENEM sozinha → prioridade máxima
+    basePriority: 1.7,
+    exerciseMinutes: 35,
   },
   {
     id: 'fisica',
@@ -22,6 +24,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-violet-500',
     icon: '⚛️',
     basePriority: 1.35,
+    exerciseMinutes: 30,
   },
   {
     id: 'quimica',
@@ -33,6 +36,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-emerald-600',
     icon: '🧪',
     basePriority: 1.3,
+    exerciseMinutes: 30,
   },
   {
     id: 'biologia',
@@ -44,6 +48,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-teal-500',
     icon: '🧬',
     basePriority: 1.2,
+    exerciseMinutes: 20,
   },
   {
     id: 'portugues',
@@ -55,6 +60,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-orange-500',
     icon: '📖',
     basePriority: 1.0,
+    exerciseMinutes: 20,
   },
   {
     id: 'redacao',
@@ -66,6 +72,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-amber-500',
     icon: '✍️',
     basePriority: 1.1,
+    exerciseMinutes: 40, // prática de escrita
   },
   {
     id: 'literatura',
@@ -77,6 +84,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-yellow-500',
     icon: '📚',
     basePriority: 0.9,
+    exerciseMinutes: 15,
   },
   {
     id: 'ingles',
@@ -88,6 +96,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-sky-500',
     icon: '🌐',
     basePriority: 0.85,
+    exerciseMinutes: 15,
   },
   {
     id: 'historia',
@@ -99,6 +108,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-red-500',
     icon: '🏛️',
     basePriority: 1.0,
+    exerciseMinutes: 15,
   },
   {
     id: 'geografia',
@@ -110,6 +120,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-lime-600',
     icon: '🌍',
     basePriority: 1.0,
+    exerciseMinutes: 15,
   },
   {
     id: 'filosofia',
@@ -121,6 +132,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-indigo-500',
     icon: '🦉',
     basePriority: 0.9,
+    exerciseMinutes: 15,
   },
   {
     id: 'sociologia',
@@ -132,6 +144,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-pink-500',
     icon: '👥',
     basePriority: 0.9,
+    exerciseMinutes: 15,
   },
 ];
 

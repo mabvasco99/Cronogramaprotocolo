@@ -13,6 +13,8 @@ export interface Subject {
   icon: string;
   /** Base priority boost applied on top of area weight (>1 for harder subjects) */
   basePriority: number;
+  /** Extra exercise minutes recommended per lesson session */
+  exerciseMinutes: number;
 }
 
 export interface CourseProfile {
@@ -27,6 +29,7 @@ export interface Lesson {
   id: string;
   subjectId: string;
   title: string;
+  /** Duration of the video lesson (~50 min on the platform) */
   durationMinutes: number;
   topic: string;
   order: number;
