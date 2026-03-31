@@ -75,12 +75,15 @@ interface Session {
 /**
  * Assigns sessions to days for one week.
  *
- * Rules:
+ * Strategy: process days from LARGEST to SMALLEST available time, filling each
+ * day completely before moving to the next. This ensures every configured day
+ * gets at least one subject, and bigger days get the highest-priority subjects.
+ *
+ * Rules enforced:
  * - A day's total session time NEVER exceeds that day's available minutes.
- * - Matemática: appears on at most 3 days/week.
- * - All other subjects: appear on at most 2 days/week.
- * - Within a day a subject appears at most once (one teoria + exercícios block).
- * - High-weight subjects are assigned first; days with most remaining time are preferred.
+ * - Matemática: at most 3 days/week.  All other subjects: at most 2 days/week.
+ * - A subject appears at most once per day.
+ * - Subjects sorted by weight; highest-weight subjects fill each day first.
  */
 function buildWeekSessions(
   studyDays: DayKey[],
@@ -90,45 +93,52 @@ function buildWeekSessions(
 ): Record<DayKey, Session[]> {
   const TEORIA = 50; // ~50 min per lesson video
 
-  // Remaining available minutes per study day
+  // Available and remaining minutes per study day
+  const dayMinutes: Record<string, number> = {};
   const remaining: Record<string, number> = {};
-  for (const d of studyDays) remaining[d] = Math.floor((hoursPerDay[d] ?? 0) * 60);
-
   const result: Record<string, Session[]> = {};
-  for (const d of studyDays) result[d] = [];
+  for (const d of studyDays) {
+    dayMinutes[d] = Math.floor((hoursPerDay[d] ?? 0) * 60);
+    remaining[d] = dayMinutes[d];
+    result[d] = [];
+  }
 
-  // Sort subjects by weight descending so highest-priority subjects get best slots
-  const sorted = SUBJECTS
+  // How many days each subject has been assigned this week
+  const subjectDayCount: Record<string, number> = {};
+  for (const s of SUBJECTS) subjectDayCount[s.id] = 0;
+
+  // Max days per week each subject can appear
+  const maxDaysFor = (id: string) => id === 'matematica' ? Math.min(3, studyDays.length) : Math.min(2, studyDays.length);
+
+  // Sort subjects by weight descending (highest priority first)
+  const sortedSubjects = SUBJECTS
     .filter(s => getLessons(s.id).length > 0 && (subjectWeights[s.id] ?? 0) > 0)
     .sort((a, b) => (subjectWeights[b.id] ?? 0) - (subjectWeights[a.id] ?? 0));
 
-  for (const s of sorted) {
-    const sessionLen = TEORIA + s.exerciseMinutes;
-    const lessons = getLessons(s.id);
+  // Process days from most to least available time.
+  // Each day is filled greedily with the highest-priority subjects that fit.
+  const daysByTime = [...studyDays].sort((a, b) => dayMinutes[b] - dayMinutes[a]);
 
-    // Max days this subject can appear in a single week
-    const maxDays = s.id === 'matematica'
-      ? Math.min(3, studyDays.length)
-      : Math.min(2, studyDays.length);
-
-    // Pick days that have enough time, preferring days with the most remaining time
-    const candidates = studyDays
-      .filter(d => remaining[d] >= sessionLen)
-      .sort((a, b) => remaining[b] - remaining[a])
-      .slice(0, maxDays);
-
-    for (const d of candidates) {
-      if (remaining[d] < sessionLen) continue;
-
-      const idx = (lessonProgress[s.id] ?? 0) % lessons.length;
-      result[d].push({
-        subjectId: s.id,
-        lesson: lessons[idx],
-        teoriaMinutes: TEORIA,
-        exerciciosMinutes: s.exerciseMinutes,
-      });
-      lessonProgress[s.id] = (lessonProgress[s.id] ?? 0) + 1;
-      remaining[d] -= sessionLen;
+  for (const d of daysByTime) {
+    for (const s of sortedSubjects) {
+      const sessionLen = TEORIA + s.exerciseMinutes;
+      if (
+        remaining[d] >= sessionLen &&
+        subjectDayCount[s.id] < maxDaysFor(s.id) &&
+        !result[d].some(x => x.subjectId === s.id)
+      ) {
+        const lessons = getLessons(s.id);
+        const idx = (lessonProgress[s.id] ?? 0) % lessons.length;
+        result[d].push({
+          subjectId: s.id,
+          lesson: lessons[idx],
+          teoriaMinutes: TEORIA,
+          exerciciosMinutes: s.exerciseMinutes,
+        });
+        lessonProgress[s.id] = (lessonProgress[s.id] ?? 0) + 1;
+        remaining[d] -= sessionLen;
+        subjectDayCount[s.id]++;
+      }
     }
   }
 
