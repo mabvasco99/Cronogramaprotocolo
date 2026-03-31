@@ -1,5 +1,5 @@
 import { SUBJECTS, SUBJECT_MAP } from '../data/subjects';
-import { LESSONS_BY_SUBJECT } from '../data/lessons';
+import { getTeoriaLessons, getExercicioLessons, type PlatformLesson } from '../data/platformLessons';
 import type {
   StudentProfile,
   ENEMArea,
@@ -8,7 +8,6 @@ import type {
   DaySchedule,
   WeeklySchedule,
   ScheduleResult,
-  Lesson,
 } from '../types';
 
 const DAY_KEYS: DayKey[] = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
@@ -75,7 +74,8 @@ export function computeSubjectWeights(profile: StudentProfile): Record<string, n
 
 interface RawSession {
   subjectId: string;
-  lesson: Lesson;
+  teoriaLesson: PlatformLesson | null;
+  exercicioLesson: PlatformLesson | null;
   teoriaMinutes: number;
   exerciciosMinutes: number;
 }
@@ -85,6 +85,7 @@ function buildWeekDays(
   hoursPerDay: Record<DayKey, number>,
   subjectWeights: Record<string, number>,
   lessonProgress: Record<string, number>,
+  exercicioProgress: Record<string, number>,
   totalWeeklyMinutes: number
 ): Record<DayKey, RawSession[]> {
   // ── Step A: decide how many sessions per subject this week ──────────────────
@@ -96,19 +97,31 @@ function buildWeekDays(
     const subjectMinutes = totalWeeklyMinutes * subjectWeights[subject.id];
     const sessionTotal = LESSON_VIDEO_MINUTES + subject.exerciseMinutes;
     const numSessions = Math.max(0, Math.round(subjectMinutes / sessionTotal));
-    const pool = LESSONS_BY_SUBJECT[subject.id] ?? [];
-    if (pool.length === 0) continue;
+
+    const teoriaPool = getTeoriaLessons(subject.id);
+    const exercicioPool = getExercicioLessons(subject.id);
+    if (teoriaPool.length === 0) continue;
 
     for (let i = 0; i < numSessions; i++) {
-      const idx = (lessonProgress[subject.id] ?? 0) % pool.length;
-      const lesson = pool[idx];
+      const tIdx = (lessonProgress[subject.id] ?? 0) % teoriaPool.length;
+      const teoriaLesson = teoriaPool[tIdx];
+
+      // Pick a matching exercise lesson if available (cycles through them)
+      let exercicioLesson: PlatformLesson | null = null;
+      if (exercicioPool.length > 0) {
+        const eIdx = (exercicioProgress[subject.id] ?? 0) % exercicioPool.length;
+        exercicioLesson = exercicioPool[eIdx];
+        exercicioProgress[subject.id] = (eIdx + 1) % exercicioPool.length;
+      }
+
       sessionsPool.push({
         subjectId: subject.id,
-        lesson,
-        teoriaMinutes: lesson.durationMinutes,
+        teoriaLesson,
+        exercicioLesson,
+        teoriaMinutes: LESSON_VIDEO_MINUTES,
         exerciciosMinutes: subject.exerciseMinutes,
       });
-      lessonProgress[subject.id] = (idx + 1) % pool.length;
+      lessonProgress[subject.id] = (tIdx + 1) % teoriaPool.length;
     }
   }
 
@@ -177,7 +190,8 @@ function buildWeek(
   startDate: Date,
   profile: StudentProfile,
   subjectWeights: Record<string, number>,
-  lessonProgress: Record<string, number>
+  lessonProgress: Record<string, number>,
+  exercicioProgress: Record<string, number>
 ): WeeklySchedule {
   const totalWeeklyMinutes =
     DAY_KEYS.reduce((s, d) => s + (profile.hoursPerDay[d] ?? 0), 0) * 60;
@@ -189,6 +203,7 @@ function buildWeek(
     profile.hoursPerDay,
     subjectWeights,
     lessonProgress,
+    exercicioProgress,
     totalWeeklyMinutes
   );
 
@@ -224,7 +239,8 @@ function buildWeek(
         durationMinutes: total,
         teoriaMinutes: session.teoriaMinutes,
         exerciciosMinutes: session.exerciciosMinutes,
-        lesson: session.lesson,
+        lesson: session.teoriaLesson,
+        exercicioLesson: session.exercicioLesson,
       };
     });
 
@@ -239,6 +255,7 @@ function buildWeek(
 export function generateSchedule(profile: StudentProfile): ScheduleResult {
   const subjectWeights = computeSubjectWeights(profile);
   const lessonProgress: Record<string, number> = {};
+  const exercicioProgress: Record<string, number> = {};
   const weeks: WeeklySchedule[] = [];
   const totalMinutesPerSubject: Record<string, number> = {};
 
@@ -250,7 +267,7 @@ export function generateSchedule(profile: StudentProfile): ScheduleResult {
   for (let w = 0; w < profile.weeksUntilExam; w++) {
     const weekStart = new Date(start);
     weekStart.setDate(start.getDate() + w * 7);
-    const week = buildWeek(w + 1, weekStart, profile, subjectWeights, lessonProgress);
+    const week = buildWeek(w + 1, weekStart, profile, subjectWeights, lessonProgress, exercicioProgress);
     weeks.push(week);
 
     for (const [id, mins] of Object.entries(week.subjectWeeklyMinutes)) {

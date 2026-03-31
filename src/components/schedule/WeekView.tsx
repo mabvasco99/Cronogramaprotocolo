@@ -24,13 +24,17 @@ function SessionCard({ block }: { block: ScheduleBlock }) {
           <div className="text-xs font-semibold text-gray-700 mb-0.5">
             Teoria — {formatMinutes(block.teoriaMinutes)}
           </div>
-          {block.lesson && (
-            <div className="text-xs text-gray-500 leading-snug">
-              {block.lesson.topic && (
-                <span className="text-gray-400">{block.lesson.topic}: </span>
-              )}
+          {block.lesson ? (
+            <a
+              href={block.lesson.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-brand-600 hover:text-brand-800 hover:underline leading-snug block"
+            >
               {block.lesson.title}
-            </div>
+            </a>
+          ) : (
+            <div className="text-xs text-gray-400">Aula da plataforma</div>
           )}
         </div>
       </div>
@@ -38,11 +42,22 @@ function SessionCard({ block }: { block: ScheduleBlock }) {
       {/* Exercícios row */}
       <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
         <span className="text-sm flex-shrink-0">✏️</span>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="text-xs font-semibold text-gray-700">
             Exercícios — {formatMinutes(block.exerciciosMinutes)}
           </div>
-          <div className="text-xs text-gray-400">Lista de questões da plataforma</div>
+          {block.exercicioLesson ? (
+            <a
+              href={block.exercicioLesson.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-brand-600 hover:text-brand-800 hover:underline leading-snug block"
+            >
+              {block.exercicioLesson.title}
+            </a>
+          ) : (
+            <div className="text-xs text-gray-400">Lista de questões da plataforma</div>
+          )}
         </div>
       </div>
     </div>

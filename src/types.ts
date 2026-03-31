@@ -25,16 +25,6 @@ export interface CourseProfile {
   weights: Record<ENEMArea, number>;
 }
 
-export interface Lesson {
-  id: string;
-  subjectId: string;
-  title: string;
-  /** Duration of the video lesson (~50 min on the platform) */
-  durationMinutes: number;
-  topic: string;
-  order: number;
-}
-
 export interface StudentProfile {
   hoursPerDay: Record<DayKey, number>;
   courseId: string;
@@ -57,7 +47,10 @@ export interface ScheduleBlock {
   durationMinutes: number;
   teoriaMinutes: number;
   exerciciosMinutes: number;
-  lesson: Lesson | null;
+  /** Platform lesson (teoria) */
+  lesson: { id: string; title: string; url: string } | null;
+  /** Platform exercise lesson (may be null if subject has no dedicated exercise lesson) */
+  exercicioLesson: { id: string; title: string; url: string } | null;
 }
 
 export interface DaySchedule {
