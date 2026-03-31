@@ -649,5 +649,9 @@ export const PLATFORM_LESSONS: Record<string, PlatformLesson[]> = {
 };
 
 export function getLessons(subjectId: string): PlatformLesson[] {
-  return PLATFORM_LESSONS[subjectId] ?? [];
+  const lessons = PLATFORM_LESSONS[subjectId] ?? [];
+  // Sort by title with numeric awareness so "Aula 01" comes before "Aula 02" etc.
+  return [...lessons].sort((a, b) =>
+    a.title.localeCompare(b.title, 'pt-BR', { numeric: true, sensitivity: 'base' })
+  );
 }

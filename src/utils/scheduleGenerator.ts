@@ -70,20 +70,25 @@ interface Session {
   lesson: PlatformLesson | null;
   teoriaMinutes: number;
   exerciciosMinutes: number;
+  // teoriaMinutes=0  → exercícios-only  (aula was watched a previous day)
+  // exerciciosMinutes=0 → teoria-only   (exercícios will be on a later day)
 }
 
 /**
  * Assigns sessions to days for one week.
  *
- * Strategy: process days from LARGEST to SMALLEST available time, filling each
- * day completely before moving to the next. This ensures every configured day
- * gets at least one subject, and bigger days get the highest-priority subjects.
+ * PASS 1 (biggest days first): fill with full sessions (teoria + exercícios).
+ *   Highest-weight subjects go to the days with most available time.
  *
- * Rules enforced:
- * - A day's total session time NEVER exceeds that day's available minutes.
- * - Matemática: at most 3 days/week.  All other subjects: at most 2 days/week.
- * - A subject appears at most once per day.
- * - Subjects sorted by weight; highest-weight subjects fill each day first.
+ * PASS 2 (chronological order): fill leftover time gaps.
+ *   - First: schedule any pending exercícios from a teoria-only block done earlier.
+ *   - Then: if remaining time >= 50 min AND a later day can absorb the exercícios,
+ *     add a teoria-only block to maximise use of the day.
+ *
+ * Rules:
+ * - A day's total time NEVER exceeds available minutes.
+ * - Matemática: at most 3 days/week. All others: at most 2 days/week.
+ * - A subject appears at most once per day (any block type).
  */
 function buildWeekSessions(
   studyDays: DayKey[],
@@ -91,9 +96,8 @@ function buildWeekSessions(
   subjectWeights: Record<string, number>,
   lessonProgress: Record<string, number>,
 ): Record<DayKey, Session[]> {
-  const TEORIA = 50; // ~50 min per lesson video
+  const TEORIA = 50;
 
-  // Available and remaining minutes per study day
   const dayMinutes: Record<string, number> = {};
   const remaining: Record<string, number> = {};
   const result: Record<string, Session[]> = {};
@@ -103,22 +107,19 @@ function buildWeekSessions(
     result[d] = [];
   }
 
-  // How many days each subject has been assigned this week
   const subjectDayCount: Record<string, number> = {};
   for (const s of SUBJECTS) subjectDayCount[s.id] = 0;
 
-  // Max days per week each subject can appear
-  const maxDaysFor = (id: string) => id === 'matematica' ? Math.min(3, studyDays.length) : Math.min(2, studyDays.length);
+  const maxDaysFor = (id: string) =>
+    id === 'matematica' ? Math.min(3, studyDays.length) : Math.min(2, studyDays.length);
 
-  // Sort subjects by weight descending (highest priority first)
   const sortedSubjects = SUBJECTS
     .filter(s => getLessons(s.id).length > 0 && (subjectWeights[s.id] ?? 0) > 0)
     .sort((a, b) => (subjectWeights[b.id] ?? 0) - (subjectWeights[a.id] ?? 0));
 
-  // Process days from most to least available time.
-  // Each day is filled greedily with the highest-priority subjects that fit.
   const daysByTime = [...studyDays].sort((a, b) => dayMinutes[b] - dayMinutes[a]);
 
+  // ── Pass 1: full sessions, biggest days first ──────────────────────────────
   for (const d of daysByTime) {
     for (const s of sortedSubjects) {
       const sessionLen = TEORIA + s.exerciseMinutes;
@@ -129,15 +130,51 @@ function buildWeekSessions(
       ) {
         const lessons = getLessons(s.id);
         const idx = (lessonProgress[s.id] ?? 0) % lessons.length;
-        result[d].push({
-          subjectId: s.id,
-          lesson: lessons[idx],
-          teoriaMinutes: TEORIA,
-          exerciciosMinutes: s.exerciseMinutes,
-        });
+        result[d].push({ subjectId: s.id, lesson: lessons[idx], teoriaMinutes: TEORIA, exerciciosMinutes: s.exerciseMinutes });
         lessonProgress[s.id] = (lessonProgress[s.id] ?? 0) + 1;
         remaining[d] -= sessionLen;
         subjectDayCount[s.id]++;
+      }
+    }
+  }
+
+  // ── Pass 2: fill time gaps with split blocks (chronological order) ─────────
+  interface PendingEx { subjectId: string; exerciciosMinutes: number }
+  const pendingEx: PendingEx[] = [];
+
+  for (const d of studyDays) {
+    // 2a. Schedule any pending exercícios from a teoria-only done on an earlier day
+    for (let i = pendingEx.length - 1; i >= 0; i--) {
+      const p = pendingEx[i];
+      if (remaining[d] >= p.exerciciosMinutes && !result[d].some(x => x.subjectId === p.subjectId)) {
+        result[d].push({ subjectId: p.subjectId, lesson: null, teoriaMinutes: 0, exerciciosMinutes: p.exerciciosMinutes });
+        remaining[d] -= p.exerciciosMinutes;
+        pendingEx.splice(i, 1);
+      }
+    }
+
+    // 2b. If >= 50 min left, add teoria-only blocks to fill the gap.
+    //     Only split if a later study day can absorb the exercícios (so nothing is lost).
+    for (const s of sortedSubjects) {
+      if (remaining[d] < TEORIA) break;
+      const alreadyHere = result[d].some(x => x.subjectId === s.id);
+      const alreadyPending = pendingEx.some(p => p.subjectId === s.id);
+      if (alreadyHere || alreadyPending || subjectDayCount[s.id] >= maxDaysFor(s.id)) continue;
+
+      // Check that a later day can absorb the exercícios
+      const dayIdx = studyDays.indexOf(d);
+      const laterDayHasRoom = studyDays
+        .slice(dayIdx + 1)
+        .some(ld => remaining[ld] >= s.exerciseMinutes);
+
+      if (laterDayHasRoom) {
+        const lessons = getLessons(s.id);
+        const idx = (lessonProgress[s.id] ?? 0) % lessons.length;
+        result[d].push({ subjectId: s.id, lesson: lessons[idx], teoriaMinutes: TEORIA, exerciciosMinutes: 0 });
+        lessonProgress[s.id] = (lessonProgress[s.id] ?? 0) + 1;
+        remaining[d] -= TEORIA;
+        subjectDayCount[s.id]++;
+        pendingEx.push({ subjectId: s.id, exerciciosMinutes: s.exerciseMinutes });
       }
     }
   }

@@ -6,49 +6,62 @@ const DAY_SHORT: Record<string, string> = {
 };
 
 function SessionCard({ block }: { block: ScheduleBlock }) {
+  const isTeoriaOnly = block.teoriaMinutes > 0 && block.exerciciosMinutes === 0;
+  const isExerciciosOnly = block.teoriaMinutes === 0 && block.exerciciosMinutes > 0;
+
   return (
     <div className={`rounded-xl border-2 overflow-hidden mb-2 last:mb-0 ${block.borderColor}`}>
       {/* Subject header */}
       <div className={`px-3 py-2 flex items-center gap-2 ${block.bgColor}`}>
         <span className="text-base">{block.icon}</span>
-        <span className={`font-bold text-sm flex-1 ${block.textColor}`}>{block.subjectName}</span>
-        <span className={`text-xs font-semibold ${block.textColor} opacity-80`}>
+        <div className={`flex-1 min-w-0 ${block.textColor}`}>
+          <div className="font-bold text-sm leading-tight">{block.subjectName}</div>
+          {isTeoriaOnly && <div className="text-xs opacity-80">📺 Só teoria — exercícios amanhã</div>}
+          {isExerciciosOnly && <div className="text-xs opacity-80">✏️ Exercícios da aula anterior</div>}
+        </div>
+        <span className={`text-xs font-semibold ${block.textColor} opacity-80 flex-shrink-0`}>
           {formatMinutes(block.durationMinutes)}
         </span>
       </div>
 
-      {/* Teoria row */}
-      <div className="flex items-start gap-2 px-3 py-2 border-b border-gray-100 bg-white">
-        <span className="text-sm flex-shrink-0 mt-0.5">📺</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-gray-700 mb-0.5">
-            Teoria — {formatMinutes(block.teoriaMinutes)}
+      {/* Teoria row — only when this block includes a video lesson */}
+      {block.teoriaMinutes > 0 && (
+        <div className={`flex items-start gap-2 px-3 py-2 bg-white ${block.exerciciosMinutes > 0 ? 'border-b border-gray-100' : ''}`}>
+          <span className="text-sm flex-shrink-0 mt-0.5">📺</span>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-gray-700 mb-0.5">
+              Teoria — {formatMinutes(block.teoriaMinutes)}
+            </div>
+            {block.lesson ? (
+              <a
+                href={block.lesson.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-800 hover:underline leading-snug block"
+              >
+                {block.lesson.title}
+              </a>
+            ) : (
+              <div className="text-xs text-gray-400">Aula da plataforma</div>
+            )}
           </div>
-          {block.lesson ? (
-            <a
-              href={block.lesson.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-brand-600 hover:text-brand-800 hover:underline leading-snug block"
-            >
-              {block.lesson.title}
-            </a>
-          ) : (
-            <div className="text-xs text-gray-400">Aula da plataforma</div>
-          )}
         </div>
-      </div>
+      )}
 
-      {/* Exercícios row */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
-        <span className="text-sm flex-shrink-0">✏️</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-gray-700">
-            Exercícios — {formatMinutes(block.exerciciosMinutes)}
+      {/* Exercícios row — only when this block includes exercises */}
+      {block.exerciciosMinutes > 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
+          <span className="text-sm flex-shrink-0">✏️</span>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-gray-700">
+              Exercícios — {formatMinutes(block.exerciciosMinutes)}
+            </div>
+            <div className="text-xs text-gray-400">
+              {isExerciciosOnly ? 'Continuação da aula anterior' : 'Lista de questões da plataforma'}
+            </div>
           </div>
-          <div className="text-xs text-gray-400">Lista de questões da plataforma</div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

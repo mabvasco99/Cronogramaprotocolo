@@ -12,7 +12,7 @@ export const SUBJECTS: Subject[] = [
     icon: '📐',
     basePriority: 1.7,
     // Students take 70+ min on math exercises
-    exerciseMinutes: 70,
+    exerciseMinutes: 90, // ~1h30
   },
   {
     id: 'fisica',
@@ -24,7 +24,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-violet-500',
     icon: '⚛️',
     basePriority: 1.35,
-    exerciseMinutes: 65,
+    exerciseMinutes: 90, // ~1h30
   },
   {
     id: 'quimica',
@@ -36,7 +36,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-emerald-600',
     icon: '🧪',
     basePriority: 1.3,
-    exerciseMinutes: 60,
+    exerciseMinutes: 90, // ~1h30
   },
   {
     id: 'biologia',
@@ -48,7 +48,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-teal-500',
     icon: '🧬',
     basePriority: 1.2,
-    exerciseMinutes: 50,
+    exerciseMinutes: 45, // ~45min
   },
   {
     id: 'portugues',
@@ -60,7 +60,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-orange-500',
     icon: '📖',
     basePriority: 1.0,
-    exerciseMinutes: 40,
+    exerciseMinutes: 35,
   },
   {
     id: 'redacao',
@@ -72,8 +72,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-amber-500',
     icon: '✍️',
     basePriority: 1.2,
-    // Redação practice takes time (writing full essays)
-    exerciseMinutes: 60,
+    exerciseMinutes: 35,
   },
   {
     id: 'literatura',
@@ -85,7 +84,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-yellow-500',
     icon: '📚',
     basePriority: 0.85,
-    exerciseMinutes: 40,
+    exerciseMinutes: 35,
   },
   {
     id: 'ingles',
@@ -109,7 +108,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-red-500',
     icon: '🏛️',
     basePriority: 1.0,
-    exerciseMinutes: 40,
+    exerciseMinutes: 35,
   },
   {
     id: 'geografia',
@@ -121,7 +120,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-lime-600',
     icon: '🌍',
     basePriority: 1.0,
-    exerciseMinutes: 40,
+    exerciseMinutes: 35,
   },
   {
     id: 'filosofia',
@@ -133,7 +132,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-indigo-500',
     icon: '🦉',
     basePriority: 0.85,
-    exerciseMinutes: 35,
+    exerciseMinutes: 25,
   },
   {
     id: 'sociologia',
@@ -145,7 +144,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-pink-500',
     icon: '👥',
     basePriority: 0.85,
-    exerciseMinutes: 35,
+    exerciseMinutes: 25,
   },
 ];
 
