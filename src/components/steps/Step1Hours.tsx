@@ -85,13 +85,13 @@ export default function Step1Hours({ profile, onChange, onNext }: Props) {
               </div>
               <input
                 type="range"
-                min={0} max={8} step={0.5}
+                min={0} max={12} step={0.5}
                 value={hours}
                 onChange={(e) => setDay(key, parseFloat(e.target.value))}
                 className="w-full accent-brand-600"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>0h</span><span>4h</span><span>8h</span>
+                <span>0h</span><span>4h</span><span>8h</span><span>12h</span>
               </div>
             </div>
           );

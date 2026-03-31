@@ -1,4 +1,5 @@
-export type ENEMArea = 'natureza' | 'matematica' | 'linguagens' | 'humanas';
+// ENEMArea includes 'redacao' as its own weighted area (200pts on its own)
+export type ENEMArea = 'natureza' | 'matematica' | 'linguagens' | 'humanas' | 'redacao';
 
 export type DayKey = 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom';
 
@@ -11,28 +12,18 @@ export interface Subject {
   textColor: string;
   borderColor: string;
   icon: string;
-  /** Base priority boost applied on top of area weight (>1 for harder subjects) */
   basePriority: number;
-  /** Extra exercise minutes recommended per lesson session */
+  /** Time for exercises after each lesson (minutes) */
   exerciseMinutes: number;
-}
-
-export interface CourseProfile {
-  id: string;
-  name: string;
-  university?: string;
-  description?: string;
-  weights: Record<ENEMArea, number>;
 }
 
 export interface StudentProfile {
   hoursPerDay: Record<DayKey, number>;
   courseId: string;
   customWeights: Record<ENEMArea, number> | null;
-  /** subjectId -> difficulty 1–5 (1 = easy, 5 = very hard) */
   difficultyRatings: Record<string, number>;
   weeksUntilExam: number;
-  startDate: string; // ISO date string
+  startDate: string;
 }
 
 export interface ScheduleBlock {
@@ -43,14 +34,10 @@ export interface ScheduleBlock {
   textColor: string;
   borderColor: string;
   icon: string;
-  /** Total = teoriaMinutes + exerciciosMinutes */
   durationMinutes: number;
   teoriaMinutes: number;
   exerciciosMinutes: number;
-  /** Platform lesson (teoria) */
-  lesson: { id: string; title: string; url: string } | null;
-  /** Platform exercise lesson (may be null if subject has no dedicated exercise lesson) */
-  exercicioLesson: { id: string; title: string; url: string } | null;
+  lesson: { id: string; title: string; url: string; section: string } | null;
 }
 
 export interface DaySchedule {
@@ -67,6 +54,14 @@ export interface WeeklySchedule {
   days: DaySchedule[];
   subjectWeeklyMinutes: Record<string, number>;
   subjectWeights: Record<string, number>;
+}
+
+export interface CourseProfile {
+  id: string;
+  name: string;
+  university?: string;
+  description?: string;
+  weights: Record<ENEMArea, number>;
 }
 
 export interface ScheduleResult {

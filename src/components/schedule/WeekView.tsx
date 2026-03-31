@@ -46,18 +46,7 @@ function SessionCard({ block }: { block: ScheduleBlock }) {
           <div className="text-xs font-semibold text-gray-700">
             Exercícios — {formatMinutes(block.exerciciosMinutes)}
           </div>
-          {block.exercicioLesson ? (
-            <a
-              href={block.exercicioLesson.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-brand-600 hover:text-brand-800 hover:underline leading-snug block"
-            >
-              {block.exercicioLesson.title}
-            </a>
-          ) : (
-            <div className="text-xs text-gray-400">Lista de questões da plataforma</div>
-          )}
+          <div className="text-xs text-gray-400">Lista de questões da plataforma</div>
         </div>
       </div>
     </div>

@@ -3,20 +3,22 @@ import { StudentProfile, ENEMArea } from '../../types';
 import { COURSES } from '../../data/courses';
 import { AREA_LABELS } from '../../data/subjects';
 
-const AREA_ORDER: ENEMArea[] = ['matematica', 'natureza', 'linguagens', 'humanas'];
+const AREA_ORDER: ENEMArea[] = ['matematica', 'natureza', 'linguagens', 'humanas', 'redacao'];
 
 const AREA_ICONS: Record<ENEMArea, string> = {
   matematica: '📐',
   natureza:   '🔬',
   linguagens: '📖',
   humanas:    '🌍',
+  redacao:    '✍️',
 };
 
 const AREA_DESCRIPTIONS: Record<ENEMArea, string> = {
-  matematica: 'Matemática — 1 prova inteira',
+  matematica: 'Matemática — 1 prova inteira (45 questões)',
   natureza:   'Física, Química e Biologia',
-  linguagens: 'Português, Redação, Literatura, Inglês',
+  linguagens: 'Português, Literatura, Inglês',
   humanas:    'História, Geografia, Filosofia, Sociologia',
+  redacao:    'Redação — 200 pts exclusivos (nota própria no ENEM)',
 };
 
 const WEIGHT_LABELS: Record<number, string> = {
@@ -32,6 +34,7 @@ const DEFAULT_WEIGHTS: Record<ENEMArea, number> = {
   natureza: 2,
   linguagens: 2,
   humanas: 2,
+  redacao: 2,
 };
 
 interface Props {
@@ -51,7 +54,7 @@ export default function Step2Goal({ profile, onChange, onNext, onBack }: Props) 
     onChange({
       ...profile,
       courseId: 'custom',
-      customWeights: { ...weights, [area]: value },
+      customWeights: { ...weights, [area]: value } as Record<import('../../types').ENEMArea, number>,
     });
   }
 

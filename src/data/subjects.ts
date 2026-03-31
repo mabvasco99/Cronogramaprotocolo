@@ -10,9 +10,9 @@ export const SUBJECTS: Subject[] = [
     textColor: 'text-white',
     borderColor: 'border-blue-500',
     icon: '📐',
-    // Matemática é uma área INTEIRA do ENEM sozinha → prioridade máxima
     basePriority: 1.7,
-    exerciseMinutes: 35,
+    // Students take 70+ min on math exercises
+    exerciseMinutes: 70,
   },
   {
     id: 'fisica',
@@ -24,7 +24,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-violet-500',
     icon: '⚛️',
     basePriority: 1.35,
-    exerciseMinutes: 30,
+    exerciseMinutes: 65,
   },
   {
     id: 'quimica',
@@ -36,7 +36,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-emerald-600',
     icon: '🧪',
     basePriority: 1.3,
-    exerciseMinutes: 30,
+    exerciseMinutes: 60,
   },
   {
     id: 'biologia',
@@ -48,7 +48,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-teal-500',
     icon: '🧬',
     basePriority: 1.2,
-    exerciseMinutes: 20,
+    exerciseMinutes: 50,
   },
   {
     id: 'portugues',
@@ -60,19 +60,20 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-orange-500',
     icon: '📖',
     basePriority: 1.0,
-    exerciseMinutes: 20,
+    exerciseMinutes: 40,
   },
   {
     id: 'redacao',
     name: 'Redação',
     shortName: 'RED',
-    area: 'linguagens',
+    area: 'redacao',
     bgColor: 'bg-amber-500',
     textColor: 'text-white',
     borderColor: 'border-amber-500',
     icon: '✍️',
-    basePriority: 1.1,
-    exerciseMinutes: 40, // prática de escrita
+    basePriority: 1.2,
+    // Redação practice takes time (writing full essays)
+    exerciseMinutes: 60,
   },
   {
     id: 'literatura',
@@ -83,8 +84,8 @@ export const SUBJECTS: Subject[] = [
     textColor: 'text-gray-900',
     borderColor: 'border-yellow-500',
     icon: '📚',
-    basePriority: 0.9,
-    exerciseMinutes: 15,
+    basePriority: 0.85,
+    exerciseMinutes: 40,
   },
   {
     id: 'ingles',
@@ -95,8 +96,8 @@ export const SUBJECTS: Subject[] = [
     textColor: 'text-white',
     borderColor: 'border-sky-500',
     icon: '🌐',
-    basePriority: 0.85,
-    exerciseMinutes: 15,
+    basePriority: 0.8,
+    exerciseMinutes: 35,
   },
   {
     id: 'historia',
@@ -108,7 +109,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-red-500',
     icon: '🏛️',
     basePriority: 1.0,
-    exerciseMinutes: 15,
+    exerciseMinutes: 40,
   },
   {
     id: 'geografia',
@@ -120,7 +121,7 @@ export const SUBJECTS: Subject[] = [
     borderColor: 'border-lime-600',
     icon: '🌍',
     basePriority: 1.0,
-    exerciseMinutes: 15,
+    exerciseMinutes: 40,
   },
   {
     id: 'filosofia',
@@ -131,8 +132,8 @@ export const SUBJECTS: Subject[] = [
     textColor: 'text-white',
     borderColor: 'border-indigo-500',
     icon: '🦉',
-    basePriority: 0.9,
-    exerciseMinutes: 15,
+    basePriority: 0.85,
+    exerciseMinutes: 35,
   },
   {
     id: 'sociologia',
@@ -143,8 +144,8 @@ export const SUBJECTS: Subject[] = [
     textColor: 'text-white',
     borderColor: 'border-pink-500',
     icon: '👥',
-    basePriority: 0.9,
-    exerciseMinutes: 15,
+    basePriority: 0.85,
+    exerciseMinutes: 35,
   },
 ];
 
@@ -153,15 +154,17 @@ export const SUBJECT_MAP: Record<string, Subject> = Object.fromEntries(
 );
 
 export const AREA_LABELS: Record<string, string> = {
-  natureza: 'Ciências da Natureza',
+  natureza:   'Ciências da Natureza',
   matematica: 'Matemática',
   linguagens: 'Linguagens e Códigos',
-  humanas: 'Ciências Humanas',
+  humanas:    'Ciências Humanas',
+  redacao:    'Redação',
 };
 
 export const AREA_COLORS: Record<string, string> = {
-  natureza: 'bg-teal-100 text-teal-800 border-teal-300',
+  natureza:   'bg-teal-100 text-teal-800 border-teal-300',
   matematica: 'bg-blue-100 text-blue-800 border-blue-300',
   linguagens: 'bg-orange-100 text-orange-800 border-orange-300',
-  humanas: 'bg-red-100 text-red-800 border-red-300',
+  humanas:    'bg-red-100 text-red-800 border-red-300',
+  redacao:    'bg-amber-100 text-amber-800 border-amber-300',
 };
