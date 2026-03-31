@@ -53,8 +53,11 @@ export interface ScheduleBlock {
   textColor: string;
   borderColor: string;
   icon: string;
+  /** Total = teoriaMinutes + exerciciosMinutes */
   durationMinutes: number;
-  lessons: Lesson[];
+  teoriaMinutes: number;
+  exerciciosMinutes: number;
+  lesson: Lesson | null;
 }
 
 export interface DaySchedule {
