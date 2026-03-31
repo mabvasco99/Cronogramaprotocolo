@@ -123,9 +123,13 @@ function buildWeekSessions(
   for (const d of daysByTime) {
     for (const s of sortedSubjects) {
       const sessionLen = TEORIA + s.exerciseMinutes;
+      // Rescue mode: if this day still has 0 sessions, ignore the maxDays
+      // concentration cap so the day always gets at least one subject.
+      const withinLimit = subjectDayCount[s.id] < maxDaysFor(s.id);
+      const rescueMode = result[d].length === 0;
       if (
         remaining[d] >= sessionLen &&
-        subjectDayCount[s.id] < maxDaysFor(s.id) &&
+        (withinLimit || rescueMode) &&
         !result[d].some(x => x.subjectId === s.id)
       ) {
         const lessons = getLessons(s.id);
