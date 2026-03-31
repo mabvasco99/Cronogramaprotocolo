@@ -63,18 +63,7 @@ export function computeSubjectWeights(profile: StudentProfile): Record<string, n
   return out;
 }
 
-// ─── 2. Daily subject cap ────────────────────────────────────────────────────
-// ≤3h  → 1 subject
-// 4-6h → 2 subjects
-// >6h  → up to floor(hours/2) subjects, max 4
-
-function dailyCap(hours: number): number {
-  if (hours <= 3) return 1;
-  if (hours <= 6) return 2;
-  return Math.min(4, Math.floor(hours / 2));
-}
-
-// ─── 3. Session building ─────────────────────────────────────────────────────
+// ─── 2. Session building ──────────────────────────────────────────────────────
 
 interface Session {
   subjectId: string;
@@ -83,81 +72,75 @@ interface Session {
   exerciciosMinutes: number;
 }
 
+/**
+ * Assigns sessions to days for one week.
+ *
+ * Rules:
+ * - A day's total session time NEVER exceeds that day's available minutes.
+ * - Matemática: appears on at most 3 days/week.
+ * - All other subjects: appear on at most 2 days/week.
+ * - Within a day a subject appears at most once (one teoria + exercícios block).
+ * - High-weight subjects are assigned first; days with most remaining time are preferred.
+ */
 function buildWeekSessions(
   studyDays: DayKey[],
   hoursPerDay: Record<DayKey, number>,
   subjectWeights: Record<string, number>,
   lessonProgress: Record<string, number>,
-  totalWeeklyMinutes: number
 ): Record<DayKey, Session[]> {
-  const TEORIA = 50; // every platform lesson is ~50min
+  const TEORIA = 50; // ~50 min per lesson video
 
-  // ── Pool: one session per (subject × needed repetitions) ───────────────────
-  const pool: Session[] = [];
+  // Remaining available minutes per study day
+  const remaining: Record<string, number> = {};
+  for (const d of studyDays) remaining[d] = Math.floor((hoursPerDay[d] ?? 0) * 60);
 
-  for (const s of SUBJECTS) {
-    const subjectMins = totalWeeklyMinutes * subjectWeights[s.id];
+  const result: Record<string, Session[]> = {};
+  for (const d of studyDays) result[d] = [];
+
+  // Sort subjects by weight descending so highest-priority subjects get best slots
+  const sorted = SUBJECTS
+    .filter(s => getLessons(s.id).length > 0 && (subjectWeights[s.id] ?? 0) > 0)
+    .sort((a, b) => (subjectWeights[b.id] ?? 0) - (subjectWeights[a.id] ?? 0));
+
+  for (const s of sorted) {
     const sessionLen = TEORIA + s.exerciseMinutes;
-    const count = Math.max(0, Math.round(subjectMins / sessionLen));
     const lessons = getLessons(s.id);
-    if (lessons.length === 0) continue;
 
-    for (let i = 0; i < count; i++) {
+    // Max days this subject can appear in a single week
+    const maxDays = s.id === 'matematica'
+      ? Math.min(3, studyDays.length)
+      : Math.min(2, studyDays.length);
+
+    // Pick days that have enough time, preferring days with the most remaining time
+    const candidates = studyDays
+      .filter(d => remaining[d] >= sessionLen)
+      .sort((a, b) => remaining[b] - remaining[a])
+      .slice(0, maxDays);
+
+    for (const d of candidates) {
+      if (remaining[d] < sessionLen) continue;
+
       const idx = (lessonProgress[s.id] ?? 0) % lessons.length;
-      pool.push({
+      result[d].push({
         subjectId: s.id,
         lesson: lessons[idx],
         teoriaMinutes: TEORIA,
         exerciciosMinutes: s.exerciseMinutes,
       });
-      lessonProgress[s.id] = idx + 1;
+      lessonProgress[s.id] = (lessonProgress[s.id] ?? 0) + 1;
+      remaining[d] -= sessionLen;
     }
   }
 
-  // Sort: highest weight first
-  pool.sort((a, b) => (subjectWeights[b.subjectId] ?? 0) - (subjectWeights[a.subjectId] ?? 0));
-
-  // ── Capacity per day ───────────────────────────────────────────────────────
-  const cap = {} as Record<DayKey, number>;
-  for (const d of studyDays) cap[d] = dailyCap(hoursPerDay[d] ?? 0);
-
-  // ── Assign sessions to days ────────────────────────────────────────────────
-  const result = {} as Record<DayKey, Session[]>;
-  for (const d of studyDays) result[d] = [];
-
-  let si = 0;
-  // Pass 1: fill up to cap
-  for (let iter = 0; iter < pool.length * studyDays.length * 2 && si < pool.length; iter++) {
-    const d = studyDays[iter % studyDays.length];
-    const sess = pool[si];
-    const already = result[d].some(x => x.subjectId === sess.subjectId);
-    if (!already && result[d].length < cap[d]) {
-      result[d].push(sess);
-      si++;
-    } else {
-      // try next day
-    }
-  }
-  // Pass 2: leftover sessions fill remaining capacity up to hard max (4)
-  for (let iter = 0; iter < pool.length * studyDays.length * 2 && si < pool.length; iter++) {
-    const d = studyDays[iter % studyDays.length];
-    const sess = pool[si];
-    const already = result[d].some(x => x.subjectId === sess.subjectId);
-    if (!already && result[d].length < 4) {
-      result[d].push(sess);
-      si++;
-    }
-  }
-
-  // Sort within day: high weight first
+  // Sort each day's blocks: highest weight first
   for (const d of studyDays) {
     result[d].sort((a, b) => (subjectWeights[b.subjectId] ?? 0) - (subjectWeights[a.subjectId] ?? 0));
   }
 
-  return result;
+  return result as Record<DayKey, Session[]>;
 }
 
-// ─── 4. Build a full week ─────────────────────────────────────────────────────
+// ─── 3. Build a full week ─────────────────────────────────────────────────────
 
 function buildWeek(
   weekNumber: number,
@@ -166,9 +149,8 @@ function buildWeek(
   subjectWeights: Record<string, number>,
   lessonProgress: Record<string, number>
 ): WeeklySchedule {
-  const totalWeeklyMinutes = DAY_KEYS.reduce((s, d) => s + (profile.hoursPerDay[d] ?? 0), 0) * 60;
   const studyDays = DAY_KEYS.filter(d => (profile.hoursPerDay[d] ?? 0) > 0);
-  const weekSessions = buildWeekSessions(studyDays, profile.hoursPerDay, subjectWeights, lessonProgress, totalWeeklyMinutes);
+  const weekSessions = buildWeekSessions(studyDays, profile.hoursPerDay, subjectWeights, lessonProgress);
 
   const days: DaySchedule[] = [];
   const subjectWeeklyMinutes: Record<string, number> = {};
@@ -184,7 +166,7 @@ function buildWeek(
       return;
     }
 
-    const blocks: ScheduleBlock[] = weekSessions[dayKey].map(sess => {
+    const blocks: ScheduleBlock[] = (weekSessions[dayKey] ?? []).map(sess => {
       const subj = SUBJECT_MAP[sess.subjectId]!;
       const total = sess.teoriaMinutes + sess.exerciciosMinutes;
       subjectWeeklyMinutes[sess.subjectId] = (subjectWeeklyMinutes[sess.subjectId] ?? 0) + total;
@@ -209,7 +191,7 @@ function buildWeek(
   return { weekNumber, startDate: startDate.toISOString().slice(0, 10), days, subjectWeeklyMinutes, subjectWeights };
 }
 
-// ─── 5. Main entry point ──────────────────────────────────────────────────────
+// ─── 4. Main entry point ──────────────────────────────────────────────────────
 
 export function generateSchedule(profile: StudentProfile): ScheduleResult {
   const subjectWeights = computeSubjectWeights(profile);
